@@ -38,8 +38,26 @@ void RenderSceneCB()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Render the triangle mesh.
-    // Add your code here.
+    // TODO:Add your code here.
     // ...
+    glEnableVertexAttribArray(0);
+    
+    // Render Cube.
+    glColor3f(1.0f, 1.0f, 1.0f);    // Not good, only used for quick demo.
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);
+	glDrawElements(GL_TRIANGLES, mesh->GetNumTriangles() * 3, GL_UNSIGNED_INT, 0);
+    
+    // Drarw XYZ axes.
+    // glColor3f(1.0f, 0.0f, 0.0f);    // Not good, only used for quick demo.
+    // glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);
+    // glDrawElements(GL_LINES, NumAxesIndices, GL_UNSIGNED_INT, 0);
+
+    glDisableVertexAttribArray(0);
+
     
     glutSwapBuffers();
 }
@@ -87,7 +105,7 @@ void ProcessKeysCB(unsigned char key, int x, int y)
 void ReleaseResources()
 {
     // Release memory if needed.
-    // Add your code here.
+    // TODO:Add your code here.
     // ...
 }
 
@@ -157,7 +175,7 @@ int main(int argc, char** argv)
 
     // Initialization.
     SetupRenderState();
-    SetupScene("TestModels_HW1/Triangles.obj");
+    SetupScene("TestModels_HW1/Cube.obj");
 
     // Register callback functions.
     glutDisplayFunc(RenderSceneCB);
