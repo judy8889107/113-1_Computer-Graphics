@@ -80,31 +80,55 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 				// 對於超過 3 個頂點的多邊形
 				if (tokens.size() > 3)
 				{
-
-					for (int j = 1; j < tokens.size() - 1; j++)
+					int p, t, n;
+					sscanf(tokens[0].c_str(), "%d/%d/%d", &p, &t, &n); // 固定頂點
+					VertexPTN fixedVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
+					int fixedIndex = findVertexPTNIndex(fixedVertexPTN);
+					if (fixedIndex == -1) // 若找不到固定頂點，則加入固定頂點
 					{
-						int p1, t1, n1, p2, t2, n2, p3, t3, n3;
-						sscanf(tokens[0].c_str(), "%d/%d/%d", &p1, &t1, &n1);
-						sscanf(tokens[j].c_str(), "%d/%d/%d", &p2, &t2, &n2);
-						sscanf(tokens[j + 1].c_str(), "%d/%d/%d", &p3, &t3, &n3);
+						vertices.push_back(fixedVertexPTN);
+						// fixedVertexPTN.print();
+						numVertices++;
+					}
+					for (int j = 1; j < tokens.size() - 1; j++) // 剩下頂點兩兩一組，和固定頂點形成三角形
+					{
 
-						VertexPTN vertexPTN1(vertexPositions[p1 - 1], vertexNormals[n1 - 1], vertexTexcoords[t1 - 1]);
-						VertexPTN vertexPTN2(vertexPositions[p2 - 1], vertexNormals[n2 - 1], vertexTexcoords[t2 - 1]);
-						VertexPTN vertexPTN3(vertexPositions[p3 - 1], vertexNormals[n3 - 1], vertexTexcoords[t3 - 1]);
+						int p1, t1, n1, p2, t2, n2;
+						sscanf(tokens[j].c_str(), "%d/%d/%d", &p1, &t1, &n1);
+						sscanf(tokens[j + 1].c_str(), "%d/%d/%d", &p2, &t2, &n2);
 
-						// 加入PTN buffer
-						vertices.push_back(vertexPTN1);
-						vertices.push_back(vertexPTN2);
-						vertices.push_back(vertexPTN3);
+						VertexPTN newVertexPTN1(vertexPositions[p1 - 1], vertexNormals[n1 - 1], vertexTexcoords[t1 - 1]);
+						VertexPTN newVertexPTN2(vertexPositions[p2 - 1], vertexNormals[n2 - 1], vertexTexcoords[t2 - 1]);
 
-						// 加入三角形index
-						vertexIndices.push_back(0);
-						vertexIndices.push_back(j);
-						vertexIndices.push_back(j + 1);
+						// TODO: 檢查兩個頂點是否存在，若不存在則加入
+						int index1 = findVertexPTNIndex(newVertexPTN1);
+						int index2 = findVertexPTNIndex(newVertexPTN2);
 
-						printf("[1] %d/%d/%d\n", p1, t1, n1);
-						printf("[2] %d/%d/%d\n", p2, t2, n2);
-						printf("[3] %d/%d/%d\n", p3, t3, n3);
+						// MAKE A TIRANGLE
+						vertexIndices.push_back(fixedIndex); // 加入固定頂點index
+						if (index1 == -1)
+						{
+							vertexIndices.push_back(numVertices);
+							vertices.push_back(newVertexPTN1);
+							// newVertexPTN1.print();
+							numVertices++;
+						}
+						else
+						{
+							vertexIndices.push_back(index1);
+						}
+
+						if (index2 == -1)
+						{
+							vertexIndices.push_back(numVertices);
+							vertices.push_back(newVertexPTN2);
+							// newVertexPTN2.print();
+							numVertices++;
+						}
+						else
+						{
+							vertexIndices.push_back(index2);
+						}
 						numTriangles++;
 					}
 				}
@@ -118,17 +142,16 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 						sscanf(token.c_str(), "%d/%d/%d", &p, &t, &n);
 						VertexPTN newVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
 						int index = findVertexPTNIndex(newVertexPTN); // 找PTN的index
-						printf("index: %d\n", index);
+						// printf("index: %d\n", index);
 						if (index != -1) // 找到PTN組合index，加入到vertexIndices中
 						{
-
 							vertexIndices.push_back(index);
 						}
 						else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
 						{
 							vertexIndices.push_back(numVertices);
 							vertices.push_back(newVertexPTN);
-							newVertexPTN.print();
+							// newVertexPTN.print();
 							numVertices++;
 						}
 					}
@@ -187,10 +210,8 @@ int TriangleMesh::findVertexPTNIndex(VertexPTN targetVertexPTN) const
 
 	for (int i = 0; i < vertices.size(); i++)
 	{
-
 		if (vertices[i].isEqual(targetVertexPTN))
 		{
-			printf("FIND!!!!\n");
 			return i;
 		}
 	}
