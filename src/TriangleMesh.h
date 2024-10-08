@@ -43,6 +43,12 @@ struct VertexPTN
 	{
 		printf("P/T/N: [%f, %f, %f] , [%f, %f, %f] , [%f, %f]\n", position.x, position.y, position.z, normal.x, normal.y, normal.z, texcoord.x, texcoord.y);
 	}
+	bool isEqual(VertexPTN targetVertexPTN) const{
+		bool posFlag = position.x == targetVertexPTN.position.x && position.y == targetVertexPTN.position.y && position.z == targetVertexPTN.position.z;
+		bool normalFlag = normal.x == targetVertexPTN.normal.x && normal.y == targetVertexPTN.normal.y && normal.z == targetVertexPTN.normal.z;
+		bool texcoordFlag = texcoord.x == targetVertexPTN.texcoord.x && texcoord.y == targetVertexPTN.texcoord.y;
+		return posFlag && normalFlag && texcoordFlag;
+	}
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texcoord;
@@ -77,6 +83,7 @@ public:
 private:
 	// TriangleMesh Private Methods.
 	void PrintMeshInfo() const;
+	int findVertexPTNIndex(VertexPTN VertexPTN) const;
 
 	// TriangleMesh Private Data.
 	GLuint vboId;

@@ -37,12 +37,6 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 
 		// 更新頂點和三角形buffer
 		std::string line;
-		float minX = std::numeric_limits<float>::max();
-		float minY = std::numeric_limits<float>::max();
-		float minZ = std::numeric_limits<float>::max();
-		float maxX = std::numeric_limits<float>::lowest();
-		float maxY = std::numeric_limits<float>::lowest();
-		float maxZ = std::numeric_limits<float>::lowest();
 
 		while (std::getline(file, line))
 		{
@@ -117,22 +111,27 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 				else // 一般三角形
 				{
 
+					numTriangles++; // 計算三角形數量
 					for (auto &token : tokens)
 					{
 						int p, t, n;
 						sscanf(token.c_str(), "%d/%d/%d", &p, &t, &n);
-						VertexPTN vertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
-						printf("add index: %d\n", numVertices);
-						printf("[non poly-1] %d/%d/%d\n", p, t, n);
-						vertexPTN.print();
-						vertices.push_back(vertexPTN);
+						VertexPTN newVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
+						int index = findVertexPTNIndex(newVertexPTN); // 找PTN的index
+						printf("index: %d\n", index);
+						if (index != -1) // 找到PTN組合index，加入到vertexIndices中
+						{
 
-						// 加入三角形index
-						vertexIndices.push_back(numVertices);
-						numVertices++;
+							vertexIndices.push_back(index);
+						}
+						else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
+						{
+							vertexIndices.push_back(numVertices);
+							vertices.push_back(newVertexPTN);
+							newVertexPTN.print();
+							numVertices++;
+						}
 					}
-					// 若無需排列組合則直接計算數量即可
-					numTriangles++;
 				}
 			}
 		}
@@ -177,11 +176,26 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			}
 		}
 
-
-
 		PrintMeshInfo();
 		return true;
 	}
+}
+
+// 找是否vertices中已有重複的PTN組合，若有則回傳其index，否則回傳-1
+int TriangleMesh::findVertexPTNIndex(VertexPTN targetVertexPTN) const
+{
+
+	for (int i = 0; i < vertices.size(); i++)
+	{
+
+		if (vertices[i].isEqual(targetVertexPTN))
+		{
+			printf("FIND!!!!\n");
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 // Desc: Create vertex buffer and index buffer.
