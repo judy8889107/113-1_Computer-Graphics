@@ -137,35 +137,47 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			}
 		}
 
-		// 更新中心點
-		// objCenter = glm::vec3((minX + maxX) / 2.0f, (minY + maxY) / 2.0f, (minZ + maxZ) / 2.0f);
-
+		// 標準化頂點
 		if (normalized)
 		{
-			// // TODO:正規化所有position
-			// float rangeX = maxX - minX;
-			// float rangeY = maxY - minY;
-			// float rangeZ = maxZ - minZ;
+			glm::vec3 minVertex = glm::vec3(FLT_MAX);
+			glm::vec3 maxVertex = glm::vec3(FLT_MIN);
 
-			// for (auto &vertex : vertices)
-			// {
-			// 	vertex.position = glm::vec3((vertex.position.x - minX) / rangeX, (vertex.position.y - minY) / rangeY, (vertex.position.z - minZ) / rangeZ);
-			// }
+			// 找最小和最大座標
+			for (const auto &vertex : vertices)
+			{
+				minVertex.x = std::min(minVertex.x, vertex.position.x);
+				minVertex.y = std::min(minVertex.y, vertex.position.y);
+				minVertex.z = std::min(minVertex.z, vertex.position.z);
+
+				maxVertex.x = std::max(maxVertex.x, vertex.position.x);
+				maxVertex.y = std::max(maxVertex.y, vertex.position.y);
+				maxVertex.z = std::max(maxVertex.z, vertex.position.z);
+			}
+
+			// bounding box 尺寸
+			glm::vec3 BoundingboxDimension = maxVertex - minVertex;
+
+			// 計算縮放比例 --> 讓 最大邊長 == 1
+			float scaleFactor = 1.0f / glm::max(glm::max(BoundingboxDimension.x, BoundingboxDimension.y), BoundingboxDimension.z);
+
+			// Scale All Vertices
+			for (auto &vertex : vertices)
+			{
+				vertex.position *= scaleFactor; // scale
+			}
+
+			// Calculate Center
+			objCenter = 0.5f * (maxVertex + minVertex) * scaleFactor; // 計算中心並對其進行scale
+
+			// 所有頂點減去中心點(移動到中心)
+			for (auto &vertex : vertices)
+			{
+				vertex.position -= objCenter;
+			}
 		}
 
-		std::cout << "size of vertices: " << vertices.size() << std::endl;
-		std::cout << "size of vertexIndices: " << vertexIndices.size() << std::endl;
 
-		// 印出vertex vector和vertices vector
-		// for (auto &vertex : vertices)
-		// {
-		// 	vertex.print();
-		// }
-
-		// for (int i = 0; i < vertexIndices.size(); i += 3)
-		// {
-		// 	printf("verticeIndices[%d]: %d %d %d\n", i, vertexIndices[i], vertexIndices[i + 1], vertexIndices[i + 2]);
-		// }
 
 		PrintMeshInfo();
 		return true;
