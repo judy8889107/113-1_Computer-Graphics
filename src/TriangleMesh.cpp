@@ -54,7 +54,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 				sscanf(line.c_str(), "v %f %f %f", &position.x, &position.y, &position.z);
 
 				vertexPositions.push_back(position); // 將頂點加入vertex buffer
-				// numVertices++;
+													 // numVertices++;
 			}
 			else if (line.substr(0, 2) == "vt")
 			{
@@ -83,7 +83,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 					tokens.push_back(tok);
 				}
 
-				// 排列組合成三角形，並紀錄index和計算數量
+				// 對於超過 3 個頂點的多邊形
 				if (tokens.size() > 3)
 				{
 
@@ -114,7 +114,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 						numTriangles++;
 					}
 				}
-				else
+				else // 一般三角形
 				{
 
 					for (auto &token : tokens)
