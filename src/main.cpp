@@ -138,6 +138,7 @@ void SetupRenderState()
 // You can alter the parameters for dynamically loading a model.
 void SetupScene(const std::string &modelPath)
 {
+    printf("[debug] Loading model: %s\n", modelPath.c_str());
     mesh = new TriangleMesh();
     mesh->LoadFromFile(modelPath);
 
