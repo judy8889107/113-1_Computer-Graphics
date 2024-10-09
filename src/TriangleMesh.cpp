@@ -40,7 +40,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 
 		while (std::getline(file, line))
 		{
-			std::cout << line << std::endl;
+			// printf("%s\n", line.c_str());
 			// 更新頂點
 			if (line.substr(0, 2) == "v ")
 			{
@@ -66,7 +66,8 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			// 更新三角形index
 			if (line.substr(0, 2) == "f ")
 			{
-
+				std::vector<unsigned int> polyIndices; //先儲存PTN對應的index，若為多邊形則之後拆解
+				std::istringstream iss(line.substr(2)); //去掉'f'前綴，並不間斷讀取
 				std::vector<std::string> tokens;
 				std::stringstream ss(line.substr(2));
 				std::string tok;
@@ -77,7 +78,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 					tokens.push_back(tok);
 				}
 
-				// 對於超過 3 個頂點的多邊形
+				// TODO:對於超過 3 個頂點的多邊形
 				if (tokens.size() > 3)
 				{
 					int p, t, n;
@@ -86,7 +87,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 					int fixedIndex = findVertexPTNIndex(fixedVertexPTN);
 					if (fixedIndex == -1) // 若找不到固定頂點，則加入固定頂點
 					{
-						vertices.push_back(fixedVertexPTN);
+						vertices.emplace_back(fixedVertexPTN);
 						// fixedVertexPTN.print();
 						numVertices++;
 					}
@@ -108,26 +109,26 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 						vertexIndices.push_back(fixedIndex); // 加入固定頂點index
 						if (index1 == -1)
 						{
-							vertexIndices.push_back(numVertices);
-							vertices.push_back(newVertexPTN1);
+							vertexIndices.emplace_back(numVertices);
+							vertices.emplace_back(newVertexPTN1);
 							// newVertexPTN1.print();
 							numVertices++;
 						}
 						else
 						{
-							vertexIndices.push_back(index1);
+							vertexIndices.emplace_back(index1);
 						}
 
 						if (index2 == -1)
 						{
-							vertexIndices.push_back(numVertices);
-							vertices.push_back(newVertexPTN2);
+							vertexIndices.emplace_back(numVertices);
+							vertices.emplace_back(newVertexPTN2);
 							// newVertexPTN2.print();
 							numVertices++;
 						}
 						else
 						{
-							vertexIndices.push_back(index2);
+							vertexIndices.emplace_back(index2);
 						}
 						numTriangles++;
 					}

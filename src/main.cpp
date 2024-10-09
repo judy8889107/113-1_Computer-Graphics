@@ -103,7 +103,7 @@ void ReleaseResources()
 void SetupRenderState()
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(2.0f);
+    glLineWidth(0.5f);
 
     glm::vec4 clearColor = glm::vec4(0.44f, 0.57f, 0.75f, 1.00f);
     glClearColor(
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
     // Initialization.
     SetupRenderState();
-    SetupScene("TestModels_HW1/Forklift.obj");
+    SetupScene("TestModels_HW1/Bunny.obj");
 
     // Register callback functions.
     glutDisplayFunc(RenderSceneCB);
