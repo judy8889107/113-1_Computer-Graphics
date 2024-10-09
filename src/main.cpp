@@ -19,6 +19,7 @@
 const int screenWidth = 600;
 const int screenHeight = 600;
 TriangleMesh *mesh = nullptr;
+std::vector<std::string> objFiles = {"Bunny.obj", "Cube.obj", "Forklift.obj", "Gengar.obj", "Koffing.obj", "Polygons.obj", "Teapot.obj", "Triangles.obj"};
 
 // Function prototypes.
 void SetupRenderState();
@@ -28,6 +29,13 @@ void RenderSceneCB();
 void ReshapeCB(int, int);
 void ProcessSpecialKeysCB(int, int, int);
 void ProcessKeysCB(unsigned char, int, int);
+//my function
+void MenuCallback(int);
+void SetupMenu();
+void RenderText(float, float, const std::string&);
+
+// define key
+#define KEY_ESC 27
 
 // Callback function for glutDisplayFunc.
 void RenderSceneCB()
@@ -35,19 +43,22 @@ void RenderSceneCB()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Render the triangle mesh.
-    // TODO:Add your code here.
     // ...
     glEnableVertexAttribArray(0);
 
     // Render Model.
-    glColor3f(1.0f, 1.0f, 1.0f); 
+    glColor3f(1.0f, 1.0f, 1.0f);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->GetVBOId());
     // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, position)); //pos offset is 0
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, position)); // pos offset is 0
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBOId());
-    glDrawElements(GL_TRIANGLES, mesh->GetNumIndices() * 3, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, mesh->GetNumIndices(), GL_UNSIGNED_INT, 0);
 
     glDisableVertexAttribArray(0);
+
+    // 渲染提示文字
+    glColor3f(1.0f, 1.0f, 1.0f); // 設置文本顏色為白色
+    RenderText(-0.9f, 0.9f, "ESC: Exit, Mouse click right: open menu, F1: Point, F2: Line, F3: Fill");
     glutSwapBuffers();
 }
 
@@ -61,6 +72,7 @@ void ReshapeCB(int w, int h)
 // Callback function for glutSpecialFunc.
 void ProcessSpecialKeysCB(int key, int x, int y)
 {
+    printf("key: %d, x: %d, y: %d\n", key, x, y);
     // Handle special (functional) keyboard inputs such as F1, spacebar, page up, etc.
     switch (key)
     {
@@ -85,7 +97,7 @@ void ProcessSpecialKeysCB(int key, int x, int y)
 void ProcessKeysCB(unsigned char key, int x, int y)
 {
     // Handle other keyboard inputs those are not defined as special keys.
-    if (key == 27)
+    if (key == KEY_ESC)
     {
         // Release memory allocation if needed.
         ReleaseResources();
@@ -96,8 +108,17 @@ void ProcessKeysCB(unsigned char key, int x, int y)
 void ReleaseResources()
 {
     // Release memory if needed.
-    // TODO:Add your code here.
-    // ...
+    if (mesh)
+    {
+        GLuint vboId = mesh->GetVBOId();
+        GLuint iboId = mesh->GetIBOId();
+
+        glDeleteBuffers(1, &vboId);
+        glDeleteBuffers(1, &iboId);
+
+        delete mesh;
+        mesh = nullptr;
+    }
 }
 
 void SetupRenderState()
@@ -146,6 +167,36 @@ void SetupScene(const std::string &modelPath)
     mesh->CreateBuffers();
 }
 
+// 建立菜單可供操作
+void SetupMenu()
+{
+    int menu = glutCreateMenu(MenuCallback);
+
+    // 將檔案名稱加入菜單
+    for (int i = 0; i < objFiles.size(); i++)
+    {
+        glutAddMenuEntry(objFiles[i].c_str(), i);
+    }
+    glutAttachMenu(GLUT_RIGHT_BUTTON); // 右鍵單擊顯示菜單
+}
+
+// 菜單回調函數
+void MenuCallback(int option)
+{
+    // 切換模型
+    
+    SetupScene("TestModels_HW1/" + objFiles[option]);
+}
+
+void RenderText(float x, float y, const std::string &text)
+{
+    glRasterPos2f(x, y); // 設置文本位置
+    for (char c : text)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // 使用位圖字體渲染字符
+    }
+}
+
 int main(int argc, char **argv)
 {
     // Setting window properties.
@@ -167,7 +218,10 @@ int main(int argc, char **argv)
 
     // Initialization.
     SetupRenderState();
-    SetupScene("TestModels_HW1/Forklift.obj");
+    SetupScene("TestModels_HW1/Cube.obj");
+
+    // 創建菜單
+    SetupMenu();
 
     // Register callback functions.
     glutDisplayFunc(RenderSceneCB);
