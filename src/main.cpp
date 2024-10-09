@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
     // Initialization.
     SetupRenderState();
-    SetupScene("TestModels_HW1/Bunny.obj");
+    SetupScene("TestModels_HW1/Forklift.obj");
 
     // Register callback functions.
     glutDisplayFunc(RenderSceneCB);

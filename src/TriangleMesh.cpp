@@ -63,99 +63,40 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 				vertexNormals.push_back(vertexNormal); // 將normal加入normal buffer
 			}
 
-			// 更新三角形index
+			// 處理PTN
 			if (line.substr(0, 2) == "f ")
 			{
-				std::vector<unsigned int> polyIndices; //先儲存PTN對應的index，若為多邊形則之後拆解
-				std::istringstream iss(line.substr(2)); //去掉'f'前綴，並不間斷讀取
-				std::vector<std::string> tokens;
-				std::stringstream ss(line.substr(2));
-				std::string tok;
-
-				// 以單一空格分割
-				while (std::getline(ss, tok, ' '))
-				{
-					tokens.push_back(tok);
-				}
-
-				// TODO:對於超過 3 個頂點的多邊形
-				if (tokens.size() > 3)
+				std::vector<unsigned int> polyIndices;	// 先儲存PTN對應的index，若為多邊形則之後拆解
+				std::istringstream iss(line.substr(2)); // 去掉'f'前綴，並不間斷讀取
+				std::string tokenPTN;
+				while (iss >> tokenPTN)
 				{
 					int p, t, n;
-					sscanf(tokens[0].c_str(), "%d/%d/%d", &p, &t, &n); // 固定頂點
-					VertexPTN fixedVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
-					int fixedIndex = findVertexPTNIndex(fixedVertexPTN);
-					if (fixedIndex == -1) // 若找不到固定頂點，則加入固定頂點
+					if (sscanf(tokenPTN.c_str(), "%d/%d/%d", &p, &t, &n) == 3) // 檢查是否成功parse
 					{
-						vertices.emplace_back(fixedVertexPTN);
-						// fixedVertexPTN.print();
-						numVertices++;
-					}
-					for (int j = 1; j < tokens.size() - 1; j++) // 剩下頂點兩兩一組，和固定頂點形成三角形
-					{
-
-						int p1, t1, n1, p2, t2, n2;
-						sscanf(tokens[j].c_str(), "%d/%d/%d", &p1, &t1, &n1);
-						sscanf(tokens[j + 1].c_str(), "%d/%d/%d", &p2, &t2, &n2);
-
-						VertexPTN newVertexPTN1(vertexPositions[p1 - 1], vertexNormals[n1 - 1], vertexTexcoords[t1 - 1]);
-						VertexPTN newVertexPTN2(vertexPositions[p2 - 1], vertexNormals[n2 - 1], vertexTexcoords[t2 - 1]);
-
-						// TODO: 檢查兩個頂點是否存在，若不存在則加入
-						int index1 = findVertexPTNIndex(newVertexPTN1);
-						int index2 = findVertexPTNIndex(newVertexPTN2);
-
-						// MAKE A TIRANGLE
-						vertexIndices.push_back(fixedIndex); // 加入固定頂點index
-						if (index1 == -1)
-						{
-							vertexIndices.emplace_back(numVertices);
-							vertices.emplace_back(newVertexPTN1);
-							// newVertexPTN1.print();
-							numVertices++;
-						}
-						else
-						{
-							vertexIndices.emplace_back(index1);
-						}
-
-						if (index2 == -1)
-						{
-							vertexIndices.emplace_back(numVertices);
-							vertices.emplace_back(newVertexPTN2);
-							// newVertexPTN2.print();
-							numVertices++;
-						}
-						else
-						{
-							vertexIndices.emplace_back(index2);
-						}
-						numTriangles++;
-					}
-				}
-				else // 一般三角形
-				{
-
-					numTriangles++; // 計算三角形數量
-					for (auto &token : tokens)
-					{
-						int p, t, n;
-						sscanf(token.c_str(), "%d/%d/%d", &p, &t, &n);
 						VertexPTN newVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
 						int index = findVertexPTNIndex(newVertexPTN); // 找PTN的index
-						// printf("index: %d\n", index);
-						if (index != -1) // 找到PTN組合index，加入到vertexIndices中
+						if (index != -1)							  // 找到PTN組合index，加入到vertexIndices中
 						{
-							vertexIndices.push_back(index);
+							polyIndices.push_back(index);
 						}
 						else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
 						{
-							vertexIndices.push_back(numVertices);
+							polyIndices.push_back(numVertices);
 							vertices.push_back(newVertexPTN);
-							// newVertexPTN.print();
 							numVertices++;
 						}
 					}
+					else
+						printf("Parse error!\n");
+				}
+				// 處理多邊形indices
+				for (int i = 1; i < polyIndices.size() - 1; i++)
+				{
+					vertexIndices.push_back(polyIndices[0]);
+					vertexIndices.push_back(polyIndices[i]);
+					vertexIndices.push_back(polyIndices[i + 1]);
+
 				}
 			}
 		}
