@@ -66,7 +66,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			// 處理PTN
 			if (line.substr(0, 2) == "f ")
 			{
-				std::vector<unsigned int> polyIndices;	// 先儲存PTN對應的index，若為多邊形則之後拆解
+				std::vector<unsigned int> polyIndices;	// 先儲存PTN對應的index，若為多邊形則之後拆解(避免重複的PTN點要重複查詢index)
 				std::istringstream iss(line.substr(2)); // 去掉'f'前綴，並不間斷讀取
 				std::string tokenPTN;
 				while (iss >> tokenPTN)

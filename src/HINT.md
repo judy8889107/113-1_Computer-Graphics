@@ -1,1 +1,0 @@
-所以思路是建立一個PTN buffer，但有些PTN組會是重複的，所以對於`Cube.obj`來說，會有$6*2*3=36$ 組PTN，但我們不應該要存36組，因為其中有些是重複的，在儲存PTN時候，應該要注意是否有重複，並為其建立一個hash table之類的indices，查看f P/T/N 的排序去對應其hash table的indices。
