@@ -21,7 +21,9 @@
 3. 為了解決多邊形需要分解成多個三角形的問題，建立一個`std::vector<unsigned int> polyIndices;`，讀取每一行f就會先將VertexPTN的index存入，若先分解的話，這`findVertexPTNIndex`要做很多次，會讓效能降低。
 4. 針對`polyIndices`處理好分解三角形的問題，再存入`vertexIndices`中。
 
-※ 在`structure VertexPTN`多寫方法`isEqual()`去比較兩`VertexPTN`物件
+※ 原本我是直接使用`vertices`遞迴尋找有無儲存過的點，但我發現這樣兔子會跑超級無敵久，所以後來改用hashMap，使用`(p, t, n)`做hash計算以後，對應到該點在`vertices`的index，因為hash好像不能使用`float`型態(順便多新增一個`structure VertexPTNIndexKey`來當作hashMap映照儲存使用)
+※ 在紀錄PTN時候，紀錄的是實際在vector index的值，而非文本PTN值
+
 
 ## 二、標準化所有頂點
 1. 有了`vertices`中的所有頂點，我們可以找出minVertex和maxVertex，並計算出Bounding box以後，將最長邊縮放為1，讓所有`vertex.position`都進行縮放。

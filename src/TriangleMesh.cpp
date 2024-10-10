@@ -74,15 +74,19 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 					int p, t, n;
 					if (sscanf(tokenPTN.c_str(), "%d/%d/%d", &p, &t, &n) == 3) // 檢查是否成功parse
 					{
-						VertexPTN newVertexPTN(vertexPositions[p - 1], vertexNormals[n - 1], vertexTexcoords[t - 1]);
-						int index = findVertexPTNIndex(newVertexPTN); // 找PTN的index
-						if (index != -1)							  // 找到PTN組合index，加入到vertexIndices中
+						VertexPTN newVertexPTN(vertexPositions[--p], vertexNormals[--n], vertexTexcoords[--t]);
+						int index = findVertexPTNIndex(p, t, n); // 找PTN的index
+						if (index != -1)									 // 找到PTN組合index，加入到vertexIndices中
 						{
 							polyIndices.push_back(index);
 						}
 						else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
 						{
 							polyIndices.push_back(numVertices);
+							//將PTN hash出的組合加入到vertexMap中
+							VertexPTNIndexKey key = {p, t, n};
+							vertexMap[key] = numVertices;
+							//將PTN組合加入到vertex中
 							vertices.push_back(newVertexPTN);
 							numVertices++;
 						}
@@ -96,7 +100,6 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 					vertexIndices.push_back(polyIndices[0]);
 					vertexIndices.push_back(polyIndices[i]);
 					vertexIndices.push_back(polyIndices[i + 1]);
-
 				}
 			}
 		}
@@ -147,18 +150,22 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 }
 
 // 找是否vertices中已有重複的PTN組合，若有則回傳其index，否則回傳-1
-int TriangleMesh::findVertexPTNIndex(VertexPTN targetVertexPTN) const
+int TriangleMesh::findVertexPTNIndex(int p, int t, int n) const
 {
-
-	for (int i = 0; i < vertices.size(); i++)
+	VertexPTNIndexKey key = {p, t, n};
+	auto it = vertexMap.find(key);
+	if (it != vertexMap.end())
 	{
-		if (vertices[i].isEqual(targetVertexPTN))
-		{
-			return i;
-		}
+		return it->second;
 	}
-
 	return -1;
+	// for (int i = 0; i < vertices.size(); i++)
+	// {
+	// 	if (vertices[i].isEqual(targetVertexPTN))
+	// 	{
+	// 		return i;
+	// 	}
+	// }
 }
 
 // Desc: Create vertex buffer and index buffer.

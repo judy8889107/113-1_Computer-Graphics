@@ -17,6 +17,9 @@
 #include <fstream>
 #include <sstream>
 
+// header file to use
+#include <unordered_map>
+
 // VertexPTN Declarations.
 struct VertexPTN
 {
@@ -43,15 +46,35 @@ struct VertexPTN
 	{
 		printf("P/T/N: [%f, %f, %f] , [%f, %f, %f] , [%f, %f]\n", position.x, position.y, position.z, normal.x, normal.y, normal.z, texcoord.x, texcoord.y);
 	}
-	bool isEqual(VertexPTN targetVertexPTN) const{
-		bool posFlag = position.x == targetVertexPTN.position.x && position.y == targetVertexPTN.position.y && position.z == targetVertexPTN.position.z;
-		bool normalFlag = normal.x == targetVertexPTN.normal.x && normal.y == targetVertexPTN.normal.y && normal.z == targetVertexPTN.normal.z;
-		bool texcoordFlag = texcoord.x == targetVertexPTN.texcoord.x && texcoord.y == targetVertexPTN.texcoord.y;
-		return posFlag && normalFlag && texcoordFlag;
-	}
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texcoord;
+};
+
+struct VertexPTNIndexKey
+{
+	int p;
+	int t;
+	int n;
+	bool operator==(const VertexPTNIndexKey &other) const
+	{
+		return p == other.p &&
+			   t == other.t &&
+			   n == other.n;
+	}
+};
+struct VertexIndexKeyHash
+{
+	std::size_t operator()(const VertexPTNIndexKey &key) const
+	{
+		// 計算每個整數的哈希值
+		std::size_t h1 = std::hash<int>{}(key.p);
+		std::size_t h2 = std::hash<int>{}(key.t);
+		std::size_t h3 = std::hash<int>{}(key.n);
+
+		// 使用位移和異或組合哈希值
+		return h1 ^ (h2 << 1) ^ (h3 << 2);
+	}
 };
 
 // TriangleMesh Declarations.
@@ -83,7 +106,8 @@ public:
 private:
 	// TriangleMesh Private Methods.
 	void PrintMeshInfo() const;
-	int findVertexPTNIndex(VertexPTN VertexPTN) const;
+	// my function
+	int findVertexPTNIndex(int p, int t, int n) const;
 
 	// TriangleMesh Private Data.
 	GLuint vboId;
@@ -94,6 +118,9 @@ private:
 	std::vector<glm::vec3> vertexPositions;
 	std::vector<glm::vec3> vertexNormals;
 	std::vector<glm::vec2> vertexTexcoords;
+
+	// my hash vector
+	std::unordered_map<VertexPTNIndexKey, int, VertexIndexKeyHash> vertexMap; // 建立vertex map
 
 	int numVertices;
 	int numTriangles;
