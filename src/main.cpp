@@ -29,10 +29,10 @@ void RenderSceneCB();
 void ReshapeCB(int, int);
 void ProcessSpecialKeysCB(int, int, int);
 void ProcessKeysCB(unsigned char, int, int);
-//my function
+// my function
 void MenuCallback(int);
 void SetupMenu();
-void RenderText(float, float, const std::string&);
+void RenderText(float, float, const std::string &);
 
 // define key
 #define KEY_ESC 27
@@ -49,7 +49,6 @@ void RenderSceneCB()
     // Render Model.
     glColor3f(1.0f, 1.0f, 1.0f);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->GetVBOId());
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, position)); // pos offset is 0
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBOId());
     glDrawElements(GL_TRIANGLES, mesh->GetNumIndices(), GL_UNSIGNED_INT, 0);
@@ -72,7 +71,6 @@ void ReshapeCB(int w, int h)
 // Callback function for glutSpecialFunc.
 void ProcessSpecialKeysCB(int key, int x, int y)
 {
-    printf("key: %d, x: %d, y: %d\n", key, x, y);
     // Handle special (functional) keyboard inputs such as F1, spacebar, page up, etc.
     switch (key)
     {
@@ -178,6 +176,7 @@ void SetupMenu()
     {
         glutAddMenuEntry(objFiles[i].c_str(), i);
     }
+    glutAddMenuEntry("Delete Model", objFiles.size());
     glutAttachMenu(GLUT_RIGHT_BUTTON); // 右鍵單擊顯示菜單
 }
 
@@ -185,8 +184,11 @@ void SetupMenu()
 void MenuCallback(int option)
 {
     // 切換模型
-    
-    SetupScene("TestModels_HW1/" + objFiles[option]);
+    if (0 <= option && option < objFiles.size())
+        SetupScene("TestModels_HW1/" + objFiles[option]);
+    else if (option == objFiles.size()) { // 刪除模型
+        mesh = new TriangleMesh();
+    }
 }
 
 void RenderText(float x, float y, const std::string &text)
