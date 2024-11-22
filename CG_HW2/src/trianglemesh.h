@@ -86,7 +86,11 @@ public:
 
 	// -------------------------------------------------------
 	// Feel free to add your methods or data here.
+	void CreateBuffers(); // 建立頂點和索引緩衝區。
+	void Render(PhongMaterial *shader);
 	// -------------------------------------------------------
+
+	
 
 	int GetNumVertices() const { return numVertices; }
 	int GetNumTriangles() const { return numTriangles; }
@@ -102,26 +106,24 @@ public:
 private:
 	// -------------------------------------------------------
 	// Feel free to add your methods or data here.
+	/* 我的定義 */
+	std::unordered_map<VertexPTNIndexKey, int, VertexIndexKeyHash> vertexMap; // 建立vertex map
+	std::unordered_map<std::string, PhongMaterial *> mtlMap;				  // 建立mtl map
+	std::vector<SubMesh> subMeshes;											  // subMeshes vector用於儲存使用不同材質的子mesh
+	int findVertexPTNIndex(int p, int t, int n) const;						  // hash find ptn index
+	bool LoadFromMTLFile(const std::string &filePath); // parse mtl file
 	// -------------------------------------------------------
 	// TriangleMesh Private Methods.
-	void PrintMeshInfo() const;
-	// my function.
-	int findVertexPTNIndex(int p, int t, int n) const; // hash find
-	bool LoadFromMTLFile(const std::string &filePath); // parse mtl file
+	// void PrintMeshInfo() const;
 
 	// TriangleMesh Private Data.
 	GLuint vboId;
 
-	std::vector<VertexPTN> vertices;
-	std::vector<unsigned int> vertexIndices;
-	// 我的hash vector
-	std::unordered_map<VertexPTNIndexKey, int, VertexIndexKeyHash> vertexMap; // 建立vertex map
-	std::unordered_map<std::string, PhongMaterial*> mtlMap; // 建立mtl map
-
+	std::vector<VertexPTN> vertices; // 所有的vertex
+	
 	// For supporting multiple materials per object, move to SubMesh.
 	// GLuint iboId;
 	// std::vector<unsigned int> vertexIndices;
-	std::vector<SubMesh> subMeshes;
 
 	// 我的vector
 	std::vector<glm::vec3> vertexPositions;

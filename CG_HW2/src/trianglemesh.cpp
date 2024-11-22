@@ -3,34 +3,36 @@
 // Constructor of a triangle mesh.
 TriangleMesh::TriangleMesh()
 {
-	// -------------------------------------------------------
-	// TODO:Add your initialization code here.
-	// -------------------------------------------------------
-}
 
-// Destructor of a triangle mesh.
-TriangleMesh::~TriangleMesh()
-{
-	// -------------------------------------------------------
-	// TODO:Add your release code here.
-	// -------------------------------------------------------
 	numVertices = 0;
 	numTriangles = 0;
 	objCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 	vboId = 0;
 }
 
+// Destructor of a triangle mesh.
+TriangleMesh::~TriangleMesh()
+{
+	vertices.clear();
+	vertexIndices.clear();
+	glDeleteBuffers(1, &vboId);
+	// 因 iboId在subMesh成員中，需遞迴刪除
+	for (auto &subMesh : subMeshes)
+	{
+		if (subMesh.iboId != 0)
+			glDeleteBuffers(1, &subMesh.iboId);
+	}
+	subMesh.clear();
+}
+
 // Load the geometry and material data from an OBJ file.
 bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normalized)
 {
-	// TODO:Parse the OBJ file.
-	// ---------------------------------------------------------------------------
-	// Add your implementation here (HW1 + read *.MTL).
-	// ---------------------------------------------------------------------------
-
-	// 區域變數
+	/* 區域變數 */
 	std::string line;
 	std::ifstream objFile(filePath);
+	SubMesh *subMesh = nullptr;
+	std::string materialName;
 
 	if (!objFile.is_open()) // 檢查檔案是否開啟
 	{
@@ -38,7 +40,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 		return false;
 	}
 
-	// 若文件存在，更新頂點和三角形buffer
+	/* 若文件存在，更新頂點和三角形buffer */
 	while (std::getline(objFile, line))
 	{
 		std::string firstToken;
@@ -46,29 +48,26 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 
 		iss >> firstToken;
 
-		// printf("%s\n", line.c_str());
-		// printf("firstToken: %s\n", firstToken.c_str());
-		// 更新頂點
-		if (firstToken == "v")
+		if (firstToken == "v") // 更新頂點
 		{
 			glm::vec3 position;
-			sscanf(line.c_str(), "v %f %f %f", &position.x, &position.y, &position.z);
-
+			iss >> position.x >> position.y >> position.z;
 			vertexPositions.push_back(position); // 將頂點加入vertex buffer
 			numVertices++;
 		}
 		else if (firstToken == "vt")
 		{
 			glm::vec2 vertexTexcoord;
-			sscanf(line.c_str(), "vt %f %f", &vertexTexcoord.x, &vertexTexcoord.y);
+			iss >> vertexTexcoord.x >> vertexTexcoord.y;
 			vertexTexcoords.push_back(vertexTexcoord); // 將texture加入texture buffer
 		}
 		else if (firstToken == "vn")
 		{
 			glm::vec3 vertexNormal;
-			sscanf(line.c_str(), "vn %f %f %f", &vertexNormal.x, &vertexNormal.y, &vertexNormal.z);
+			iss >> vertexNormal.x >> vertexNormal.y >> vertexNormal.z;
 			vertexNormals.push_back(vertexNormal); // 將normal加入normal buffer
 		}
+		/* 以下開始為作業2的內容 */
 		else if (firstToken == "mtllib") // 取得 mtl檔案 相對路徑
 		{
 			std::string mtlName, parentDirectory, mtlFilePath;
@@ -77,92 +76,104 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			if (lastSlash != std::string::npos)
 				parentDirectory = filePath.substr(0, lastSlash + 1); // 返回目录部分，包括斜杠
 			mtlFilePath = parentDirectory + mtlName;
-			LoadFromMTLFile(mtlFilePath); // parse mtl檔案
+			LoadFromMTLFile(mtlFilePath); // parse mtl檔案，建立mtlMap
+		}
+		else if (firstToken == "usemtl") // 建立 submesh
+		{
+			if (subMesh != nullptr)
+			{
+				subMeshes.push_back(*subMesh);
+				delete subMesh;	   // 釋放內存，但還是指向相同記憶體位置
+				subMesh = nullptr; // 將submesh指標設為空
+			}
+			iss >> materialName;
+			subMesh = new SubMesh();
+			subMesh->material = mtlMap[materialName]; // subMesh的material指向mtlMap中的定義的材質
 		}
 
-		// 	// 處理PTN
-		// 	if (firstToken == "f ")
-		// 	{
-		// 		std::vector<unsigned int> polyIndices;	// 先儲存PTN對應的index，若為多邊形則之後拆解(避免重複的PTN點要重複查詢index)
-		// 		std::istringstream iss(line.substr(2)); // 去掉'f'前綴，並不間斷讀取
-		// 		std::string tokenPTN;
-		// 		while (iss >> tokenPTN)
-		// 		{
-		// 			int p, t, n;
-		// 			if (sscanf(tokenPTN.c_str(), "%d/%d/%d", &p, &t, &n) == 3) // 檢查是否成功parse
-		// 			{
-		// 				VertexPTN newVertexPTN(vertexPositions[--p], vertexNormals[--n], vertexTexcoords[--t]);
-		// 				int index = findVertexPTNIndex(p, t, n); // 找PTN的index
-		// 				if (index != -1)						 // 找到PTN組合index，加入到vertexIndices中
-		// 				{
-		// 					polyIndices.push_back(index);
-		// 				}
-		// 				else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
-		// 				{
-		// 					polyIndices.push_back(numVertices);
-		// 					// 將PTN hash出的組合加入到vertexMap中
-		// 					VertexPTNIndexKey key = {p, t, n};
-		// 					vertexMap[key] = numVertices;
-		// 					// 將PTN組合加入到vertex中
-		// 					vertices.push_back(newVertexPTN);
-		// 					numVertices++;
-		// 				}
-		// 			}
-		// 			else
-		// 				printf("Parse error!\n");
-		// 		}
-		// 		// 處理多邊形indices
-		// 		for (int i = 1; i < polyIndices.size() - 1; i++)
-		// 		{
-		// 			vertexIndices.push_back(polyIndices[0]);
-		// 			vertexIndices.push_back(polyIndices[i]);
-		// 			vertexIndices.push_back(polyIndices[i + 1]);
-		// 		}
-		// 	}
-		// }
+		/* 處理PTN */
+		else if (firstToken == "f")
+		{
+			std::vector<unsigned int> polyIndices; // 先儲存PTN對應的index，若為多邊形則之後拆解(避免重複的PTN點要重複查詢index)
+			while (!iss.eof())
+			{ // 檢查是否達到文件結尾，若無
+				int p, t, n;
+				iss >> p, iss.ignore(1); // ignore '/'
+				iss >> t, iss.ignore(1);
+				iss >> n;
 
-		// // 標準化頂點
-		// if (normalized)
-		// {
-		// 	glm::vec3 minVertex = glm::vec3(FLT_MAX);
-		// 	glm::vec3 maxVertex = glm::vec3(FLT_MIN);
-
-		// 	// 找最小和最大座標
-		// 	for (const auto &vertex : vertices)
-		// 	{
-		// 		minVertex.x = std::min(minVertex.x, vertex.position.x);
-		// 		minVertex.y = std::min(minVertex.y, vertex.position.y);
-		// 		minVertex.z = std::min(minVertex.z, vertex.position.z);
-
-		// 		maxVertex.x = std::max(maxVertex.x, vertex.position.x);
-		// 		maxVertex.y = std::max(maxVertex.y, vertex.position.y);
-		// 		maxVertex.z = std::max(maxVertex.z, vertex.position.z);
-		// 	}
-
-		// 	// bounding box 尺寸
-		// 	glm::vec3 BoundingboxDimension = maxVertex - minVertex;
-
-		// 	// 計算縮放比例 --> 讓 最大邊長 == 1
-		// 	float scaleFactor = 1.0f / glm::max(glm::max(BoundingboxDimension.x, BoundingboxDimension.y), BoundingboxDimension.z);
-
-		// 	// Scale All Vertices
-		// 	for (auto &vertex : vertices)
-		// 	{
-		// 		vertex.position *= scaleFactor; // scale
-		// 	}
-
-		// 	// Calculate Center
-		// 	objCenter = 0.5f * (maxVertex + minVertex) * scaleFactor; // 計算中心並對其進行scale
-
-		// 	// 所有頂點減去中心點(移動到中心)
-		// 	for (auto &vertex : vertices)
-		// 	{
-		// 		vertex.position -= objCenter;
-		// 	}
-		// }
-
-		// PrintMeshInfo();
+				VertexPTN newVertexPTN(vertexPositions[--p], vertexNormals[--n], vertexTexcoords[--t]);
+				int index = findVertexPTNIndex(p, t, n); // 找PTN的index
+				if (index != -1)						 // 找到PTN組合index，加入到vertexIndices中
+				{
+					polyIndices.push_back(index);
+				}
+				else // 若找不到，代表這個PTN組合是新的，需要加入到vertices中
+				{
+					polyIndices.push_back(numVertices);
+					// 將PTN hash出的組合加入到vertexMap中
+					VertexPTNIndexKey key = {p, t, n};
+					vertexMap[key] = numVertices;
+					// 將PTN組合加入到vertex中
+					vertices.push_back(newVertexPTN);
+					numVertices++;
+				}
+			}
+			/* 處理多邊形indices(建立三角形，但是儲存於subMesh的vertexIndices) */
+			for (size_t i = 1; i < polyIndices.size() - 1; i++)
+			{
+				subMesh->vertexIndices.push_back(polyIndices[0]);
+				subMesh->vertexIndices.push_back(polyIndices[i]);
+				subMesh->vertexIndices.push_back(polyIndices[i + 1]);
+				numTriangles++;
+			}
+		}
 	}
+
+	/* 標準化頂點 */
+	if (normalized)
+	{
+		glm::vec3 minVertex = glm::vec3(FLT_MAX);
+		glm::vec3 maxVertex = glm::vec3(-FLT_MAX); // 與第一版不同：初始化最小值(負的最大值，就算值為負數，也會比這個大進而被取代)
+
+		// 找最小和最大座標
+		for (const auto &vertex : vertices)
+		{
+			minVertex.x = std::min(minVertex.x, vertex.position.x);
+			minVertex.y = std::min(minVertex.y, vertex.position.y);
+			minVertex.z = std::min(minVertex.z, vertex.position.z);
+
+			maxVertex.x = std::max(maxVertex.x, vertex.position.x);
+			maxVertex.y = std::max(maxVertex.y, vertex.position.y);
+			maxVertex.z = std::max(maxVertex.z, vertex.position.z);
+		}
+
+		// bounding box 尺寸
+		glm::vec3 BoundingboxDimension = maxVertex - minVertex;
+
+		// 計算縮放比例 --> 讓 最大邊長 == 1
+		float scaleFactor = 1.0f / glm::max(glm::max(BoundingboxDimension.x, BoundingboxDimension.y), BoundingboxDimension.z);
+
+		// Scale All Vertices
+		for (auto &vertex : vertices)
+		{
+			vertex.position *= scaleFactor; // scale
+		}
+
+		objCenter = 0.5f * (maxVertex + minVertex) * scaleFactor; // 計算中心並對其進行scale
+
+		// 所有頂點減去中心點(移動到中心)
+		for (auto &vertex : vertices)
+		{
+			vertex.position -= objCenter;
+		}
+
+		// 更新minVertex和maxVertex，以計算新的bounding box(objExtent)=1*1*1
+		(minVertex *= scaleFactor, minVertex -= objCenter);
+		(maxVertex *= scaleFactor, maxVertex -= objCenter);
+		objExtent = maxVertex - minVertex;
+	}
+
 	return true;
 }
 
@@ -219,7 +230,8 @@ bool TriangleMesh::LoadFromMTLFile(const std::string &mtlFilePath)
 	}
 
 	// 印出所有mtl 名字和詳細資訊(for debug)
-	for (auto &mtl: mtlMap){
+	for (auto &mtl : mtlMap)
+	{
 		printf("mtl name: %s\n", mtl.first.c_str());
 		mtl.second->PrintInfo();
 	}
@@ -236,6 +248,51 @@ int TriangleMesh::findVertexPTNIndex(int p, int t, int n) const
 		return it->second;
 	}
 	return -1;
+}
+
+void TriangleMesh::CreateBuffers()
+{
+	// 產生vertex buffer
+	glGenBuffers(1, &vboId);
+	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexPTN) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	// 對subMeshes產生iboId buffer
+	for (auto &subMesh : subMeshes)
+	{
+
+		glGenBuffers(1, &subMesh.iboId);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, subMesh.iboId);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * subMesh.vertexIndices.size(), &subMesh.vertexIndices[0], GL_STATIC_DRAW);
+	}
+}
+
+void TriangleMesh::Render(PhongMaterial *shader) // ref sphere.cpp Render()
+{
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	// 綁定 position 和 normal
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, position)); // pos offset is 0
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, normal)); // pos offset is 0
+
+	// 對iboId 對遞迴處理(shader 使用uniform 綁定參數)
+	for (auto &subMesh : subMeshes)
+	{
+		if (subMesh.material)
+		{
+			glUniform3fv(shader->GetLocKa(), 1, glm::value_ptr(subMesh.material->GetKa()));
+			glUniform3fv(shader->GetLocKd(), 1, glm::value_ptr(subMesh.material->GetKd()));
+			glUniform3fv(shader->GetLocKs(), 1, glm::value_ptr(subMesh.material->GetKs()));
+			glUniform1f(shader->GetLocNs(), subMesh.material->GetNs());
+		}
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, subMesh.iboId);
+		glDrawElements(GL_TRIANGLES, (GLsizei)(subMesh.vertexIndices.size()), GL_UNSIGNED_INT, 0);
+
+	}
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
 }
 
 // Show model information.
