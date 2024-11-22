@@ -14,7 +14,6 @@ TriangleMesh::TriangleMesh()
 TriangleMesh::~TriangleMesh()
 {
 	vertices.clear();
-	vertexIndices.clear();
 	glDeleteBuffers(1, &vboId);
 	// 因 iboId在subMesh成員中，需遞迴刪除
 	for (auto &subMesh : subMeshes)
@@ -22,7 +21,7 @@ TriangleMesh::~TriangleMesh()
 		if (subMesh.iboId != 0)
 			glDeleteBuffers(1, &subMesh.iboId);
 	}
-	subMesh.clear();
+	subMeshes.clear();
 }
 
 // Load the geometry and material data from an OBJ file.
@@ -177,6 +176,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 	return true;
 }
 
+/* 載入mtl檔案 */
 bool TriangleMesh::LoadFromMTLFile(const std::string &mtlFilePath)
 {
 	// 區域變數
@@ -266,7 +266,7 @@ void TriangleMesh::CreateBuffers()
 	}
 }
 
-void TriangleMesh::Render(PhongMaterial *shader) // ref sphere.cpp Render()
+void TriangleMesh::Render(PhongShadingDemoShaderProg *shader) // ref sphere.cpp Render()
 {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);

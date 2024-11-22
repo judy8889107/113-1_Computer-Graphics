@@ -77,7 +77,7 @@ public:
 	GLint GetLocPointLightPos() const { return locPointLightPos; }
 	GLint GetLocPointLightIntensity() const { return locPointLightIntensity; }
 	// -------------------------------------------------------
-	// Add your methods for spot light.
+	// TODO:Add your methods for spot light.
 	// -------------------------------------------------------
 
 protected:
@@ -102,7 +102,7 @@ private:
 	GLint locPointLightPos;
 	GLint locPointLightIntensity;
 	// -------------------------------------------------------
-	// Add your data for spot light.
+	// TODO:Add your data for spot light.
 	// -------------------------------------------------------
 };
 

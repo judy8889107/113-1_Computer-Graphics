@@ -87,7 +87,7 @@ public:
 	// -------------------------------------------------------
 	// Feel free to add your methods or data here.
 	void CreateBuffers(); // 建立頂點和索引緩衝區。
-	void Render(PhongMaterial *shader);
+	void Render(PhongShadingDemoShaderProg *shader);
 	// -------------------------------------------------------
 
 	

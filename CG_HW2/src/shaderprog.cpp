@@ -143,7 +143,7 @@ PhongShadingDemoShaderProg::PhongShadingDemoShaderProg()
 	locPointLightPos = -1;
 	locPointLightIntensity = -1;
     // -------------------------------------------------------
-	// Add your code for initializing the data of spot light.
+	// TODO:Add your code for initializing the data of spot light.
 	// -------------------------------------------------------
 }
 
