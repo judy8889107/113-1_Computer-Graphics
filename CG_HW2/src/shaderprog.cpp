@@ -6,7 +6,8 @@ ShaderProg::ShaderProg()
 {
     // Create OpenGL shader program.
     shaderProgId = glCreateProgram();
-    if (shaderProgId == 0) {
+    if (shaderProgId == 0)
+    {
         std::cerr << "[ERROR] Failed to create shader program" << std::endl;
         exit(1);
     }
@@ -23,14 +24,16 @@ bool ShaderProg::LoadFromFiles(const std::string vsFilePath, const std::string f
 {
     // Load the vertex shader from a source file and attach it to the shader program.
     std::string vs, fs;
-    if (!LoadShaderTextFromFile(vsFilePath, vs)) {
+    if (!LoadShaderTextFromFile(vsFilePath, vs))
+    {
         std::cerr << "[ERROR] Failed to load vertex shader source: " << vsFilePath << std::endl;
         return false;
     }
     GLuint vsId = AddShader(vs, GL_VERTEX_SHADER);
 
     // Load the fragment shader from a source file and attach it to the shader program.
-    if (!LoadShaderTextFromFile(fsFilePath, fs)) {
+    if (!LoadShaderTextFromFile(fsFilePath, fs))
+    {
         std::cerr << "[ERROR] Failed to load vertex shader source: " << fsFilePath << std::endl;
         return false;
     };
@@ -38,12 +41,13 @@ bool ShaderProg::LoadFromFiles(const std::string vsFilePath, const std::string f
 
     // Link and compile shader programs.
     GLint success = 0;
-    GLchar errorLog[MAX_BUFFER_SIZE] = { 0 };
+    GLchar errorLog[MAX_BUFFER_SIZE] = {0};
     glLinkProgram(shaderProgId);
     glGetProgramiv(shaderProgId, GL_LINK_STATUS, &success);
-    if (success == 0) {
+    if (success == 0)
+    {
         glGetProgramInfoLog(shaderProgId, sizeof(errorLog), NULL, errorLog);
-        std::cerr << "[ERROR] Failed to link shader program: " <<  errorLog << std::endl;
+        std::cerr << "[ERROR] Failed to link shader program: " << errorLog << std::endl;
         return false;
     }
 
@@ -54,7 +58,8 @@ bool ShaderProg::LoadFromFiles(const std::string vsFilePath, const std::string f
     // Validate program.
     glValidateProgram(shaderProgId);
     glGetProgramiv(shaderProgId, GL_VALIDATE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetProgramInfoLog(shaderProgId, sizeof(errorLog), NULL, errorLog);
         std::cerr << "[ERROR] Invalid shader program: " << errorLog << std::endl;
         return false;
@@ -71,15 +76,16 @@ void ShaderProg::GetUniformVariableLocation()
     locMVP = glGetUniformLocation(shaderProgId, "MVP");
 }
 
-GLuint ShaderProg::AddShader(const std::string& sourceText, GLenum shaderType)
+GLuint ShaderProg::AddShader(const std::string &sourceText, GLenum shaderType)
 {
     GLuint shaderObj = glCreateShader(shaderType);
-    if (shaderObj == 0) {
+    if (shaderObj == 0)
+    {
         std::cerr << "[ERROR] Failed to create shader with type " << shaderType << std::endl;
         exit(0);
     }
 
-    const GLchar* p[1];
+    const GLchar *p[1];
     p[0] = sourceText.c_str();
     GLint lengths[1];
     lengths[0] = (GLint)(sourceText.length());
@@ -88,7 +94,8 @@ GLuint ShaderProg::AddShader(const std::string& sourceText, GLenum shaderType)
 
     GLint success;
     glGetShaderiv(shaderObj, GL_COMPILE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         GLchar infoLog[MAX_BUFFER_SIZE];
         glGetShaderInfoLog(shaderObj, MAX_BUFFER_SIZE, NULL, infoLog);
         std::cerr << "[ERROR] Failed to compile shader with type: " << shaderType << ". Info: " << infoLog << std::endl;
@@ -100,14 +107,16 @@ GLuint ShaderProg::AddShader(const std::string& sourceText, GLenum shaderType)
     return shaderObj;
 }
 
-bool ShaderProg::LoadShaderTextFromFile(const std::string filePath, std::string& sourceText)
+bool ShaderProg::LoadShaderTextFromFile(const std::string filePath, std::string &sourceText)
 {
     std::ifstream sourceFile(filePath.c_str());
-    if(!sourceFile) {
+    if (!sourceFile)
+    {
         std::cerr << "[ERROR] Failed to open shader source file: " << filePath << std::endl;
         return false;
     }
-    sourceText.assign((std::istreambuf_iterator< char >(sourceFile)),  std::istreambuf_iterator< char >());
+    std::cout << "[Debug] Load file: " << filePath << std::endl;
+    sourceText.assign((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
     return true;
 }
 
@@ -119,7 +128,8 @@ FillColorShaderProg::FillColorShaderProg()
 }
 
 FillColorShaderProg::~FillColorShaderProg()
-{}
+{
+}
 
 void FillColorShaderProg::GetUniformVariableLocation()
 {
@@ -139,16 +149,17 @@ PhongShadingDemoShaderProg::PhongShadingDemoShaderProg()
     locNs = -1;
     locAmbientLight = -1;
     locDirLightDir = -1;
-	locDirLightRadiance = -1;
-	locPointLightPos = -1;
-	locPointLightIntensity = -1;
+    locDirLightRadiance = -1;
+    locPointLightPos = -1;
+    locPointLightIntensity = -1;
     // -------------------------------------------------------
-	// TODO:Add your code for initializing the data of spot light.
-	// -------------------------------------------------------
+    // TODO:Add your code for initializing the data of spot light.
+    // -------------------------------------------------------
 }
 
 PhongShadingDemoShaderProg::~PhongShadingDemoShaderProg()
-{}
+{
+}
 
 void PhongShadingDemoShaderProg::GetUniformVariableLocation()
 {
@@ -162,11 +173,10 @@ void PhongShadingDemoShaderProg::GetUniformVariableLocation()
     locNs = glGetUniformLocation(shaderProgId, "Ns");
     locAmbientLight = glGetUniformLocation(shaderProgId, "ambientLight");
     locDirLightDir = glGetUniformLocation(shaderProgId, "dirLightDir");
-	locDirLightRadiance = glGetUniformLocation(shaderProgId, "dirLightRadiance");
-	locPointLightPos = glGetUniformLocation(shaderProgId, "pointLightPos");
-	locPointLightIntensity = glGetUniformLocation(shaderProgId, "pointLightIntensity");
+    locDirLightRadiance = glGetUniformLocation(shaderProgId, "dirLightRadiance");
+    locPointLightPos = glGetUniformLocation(shaderProgId, "pointLightPos");
+    locPointLightIntensity = glGetUniformLocation(shaderProgId, "pointLightIntensity");
     // -------------------------------------------------------
-	// TODO:Add your code for getting the location of data of spot light.
-	// -------------------------------------------------------
+    // TODO:Add your code for getting the location of data of spot light.
+    // -------------------------------------------------------
 }
-

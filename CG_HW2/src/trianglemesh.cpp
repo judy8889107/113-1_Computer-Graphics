@@ -43,7 +43,9 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 	while (std::getline(objFile, line))
 	{
 		std::string firstToken;
-		std::istringstream iss(line); // 创建字符串流
+		std::istringstream iss(line); // 建立字串流
+
+
 
 		iss >> firstToken;
 
@@ -73,7 +75,9 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 			size_t lastSlash = filePath.find_last_of("/\\"); // 查找最后一个斜杠的位置
 			iss >> mtlName;
 			if (lastSlash != std::string::npos)
-				parentDirectory = filePath.substr(0, lastSlash + 1); // 返回目录部分，包括斜杠
+				parentDirectory = filePath.substr(0, lastSlash + 1); // 回目錄部分，包括斜杠
+
+
 			mtlFilePath = parentDirectory + mtlName;
 			LoadFromMTLFile(mtlFilePath); // parse mtl檔案，建立mtlMap
 		}
@@ -274,7 +278,7 @@ void TriangleMesh::Render(PhongShadingDemoShaderProg *shader) // ref sphere.cpp 
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	// 綁定 position 和 normal
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, position)); // pos offset is 0
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, normal)); // pos offset is 0
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPTN), (void *)offsetof(VertexPTN, normal));   // pos offset is 0
 
 	// 對iboId 對遞迴處理(shader 使用uniform 綁定參數)
 	for (auto &subMesh : subMeshes)
@@ -287,8 +291,7 @@ void TriangleMesh::Render(PhongShadingDemoShaderProg *shader) // ref sphere.cpp 
 			glUniform1f(shader->GetLocNs(), subMesh.material->GetNs());
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, subMesh.iboId);
-		glDrawElements(GL_TRIANGLES, (GLsizei)(subMesh.vertexIndices.size()), GL_UNSIGNED_INT, 0);
-
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(subMesh.vertexIndices.size()), GL_UNSIGNED_INT, 0);
 	}
 
 	glDisableVertexAttribArray(0);

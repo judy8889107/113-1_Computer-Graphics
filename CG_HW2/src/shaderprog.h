@@ -92,7 +92,7 @@ private:
 	GLint locCameraPos;
 	// Material properties.
 	GLint locKa;
-	GLint locKd;
+GLint locKd;
 	GLint locKs;
 	GLint locNs;
 	// Light data.

@@ -8,11 +8,11 @@
 int screenWidth = 600;
 int screenHeight = 600;
 // Triangle mesh.
-TriangleMesh* mesh = nullptr;
+TriangleMesh *mesh = nullptr;
 // Lights.
-DirectionalLight* dirLight = nullptr;
-PointLight* pointLight = nullptr;
-SpotLight* spotLight = nullptr;
+DirectionalLight *dirLight = nullptr;
+PointLight *pointLight = nullptr;
+SpotLight *spotLight = nullptr;
 // Parameters: PLEASE DO NOT CHANGE THESE PARAMETERS.
 glm::vec3 dirLightDirection = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 dirLightRadiance = glm::vec3(0.6f, 0.6f, 0.6f);
@@ -25,7 +25,7 @@ float spotLightCutoffStartInDegree = 30.0f;
 float spotLightTotalWidthInDegree = 45.0f;
 glm::vec3 ambientLight = glm::vec3(0.2f, 0.2f, 0.2f);
 // Camera.
-Camera* camera = nullptr;
+Camera *camera = nullptr;
 glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 5.0f);
 glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -33,19 +33,20 @@ float fovy = 30.0f;
 float zNear = 0.1f;
 float zFar = 1000.0f;
 // Shaders.
-FillColorShaderProg* fillColorShader = nullptr;
-PhongShadingDemoShaderProg* phongShadingShader = nullptr;
+FillColorShaderProg *fillColorShader = nullptr;
+PhongShadingDemoShaderProg *phongShadingShader = nullptr;
 // UI.
 const float lightMoveSpeed = 0.2f;
 
 // SceneObject.
 struct SceneObject
 {
-    SceneObject() {
+    SceneObject()
+    {
         mesh = nullptr;
         worldMatrix = glm::mat4x4(1.0f);
     }
-    TriangleMesh* mesh;
+    TriangleMesh *mesh;
     glm::mat4x4 worldMatrix;
 };
 SceneObject sceneObj;
@@ -53,12 +54,13 @@ SceneObject sceneObj;
 // ScenePointLight（用於點光源的可視化）。
 struct ScenePointLight
 {
-    ScenePointLight() {
+    ScenePointLight()
+    {
         light = nullptr;
         worldMatrix = glm::mat4x4(1.0f);
         visColor = glm::vec3(1.0f, 1.0f, 1.0f);
     }
-    PointLight* light;
+    PointLight *light;
     glm::mat4x4 worldMatrix;
     glm::vec3 visColor;
 };
@@ -73,10 +75,9 @@ void ReshapeCB(int, int);
 void ProcessSpecialKeysCB(int, int, int);
 void ProcessKeysCB(unsigned char, int, int);
 void SetupRenderState();
-void LoadObjects(const std::string&);
+void LoadObjects(const std::string &);
 void CreateCamera();
 void CreateShaderLib();
-
 
 void ReleaseResources()
 {
@@ -85,33 +86,40 @@ void ReleaseResources()
     // ----------------------------------------------------
 
     // Delete scene objects and lights.
-    if (mesh != nullptr) {
+    if (mesh != nullptr)
+    {
         delete mesh;
         mesh = nullptr;
     }
-    if (pointLight != nullptr) {
+    if (pointLight != nullptr)
+    {
         delete pointLight;
         pointLight = nullptr;
     }
-    if (spotLight != nullptr) {
+    if (spotLight != nullptr)
+    {
         delete spotLight;
         spotLight = nullptr;
     }
-    if (dirLight != nullptr) {
+    if (dirLight != nullptr)
+    {
         delete dirLight;
         dirLight = nullptr;
     }
     // Delete camera.
-    if (camera != nullptr) {
+    if (camera != nullptr)
+    {
         delete camera;
         camera = nullptr;
     }
     // Delete shaders.
-    if (fillColorShader != nullptr) {
+    if (fillColorShader != nullptr)
+    {
         delete fillColorShader;
         fillColorShader = nullptr;
     }
-    if (phongShadingShader != nullptr) {
+    if (phongShadingShader != nullptr)
+    {
         delete phongShadingShader;
         phongShadingShader = nullptr;
     }
@@ -122,33 +130,84 @@ const float rotStep = 0.025f;
 void RenderSceneCB()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     // Render a triangle mesh with Phong shading. ------------------------------------------------
-    TriangleMesh* mesh = sceneObj.mesh;
-    if (sceneObj.mesh != nullptr) {
+    TriangleMesh *mesh = sceneObj.mesh;
+    if (sceneObj.mesh != nullptr)
+    {
         // Update transform.
         // curRotationY += rotStep;
         glm::mat4x4 S = glm::scale(glm::mat4x4(1.0f), glm::vec3(1.5f, 1.5f, 1.5f));
         glm::mat4x4 R = glm::rotate(glm::mat4x4(1.0f), glm::radians(curRotationY), glm::vec3(0, 1, 0));
-        sceneObj.worldMatrix = S * R;
+        sceneObj.worldMatrix = R * S;
         // -------------------------------------------------------
-		// Note: if you want to compute lighting in the View Space, 
+        // Note: if you want to compute lighting in the View Space,
         //       you might need to change the code below.
-		// -------------------------------------------------------
+        // -------------------------------------------------------
         glm::mat4x4 normalMatrix = glm::transpose(glm::inverse(sceneObj.worldMatrix));
         glm::mat4x4 MVP = camera->GetProjMatrix() * camera->GetViewMatrix() * sceneObj.worldMatrix;
-        
+
         // -------------------------------------------------------
-		// TODO:Add your rendering code here.
-		// -------------------------------------------------------
+        // TODO:Add your rendering code here.
+        // Ref shading.cpp
+        phongShadingShader->Bind();
+
+        // Transformation Matrix
+        glUniformMatrix4fv(phongShadingShader->GetLocM(), 1, GL_FALSE, glm::value_ptr(sceneObj.worldMatrix));
+        glUniformMatrix4fv(phongShadingShader->GetLocCameraPos(), 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+        glUniformMatrix4fv(phongShadingShader->GetLocNM(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glUniformMatrix4fv(phongShadingShader->GetLocMVP(), 1, GL_FALSE, glm::value_ptr(MVP));
+
+        // 渲染網格
+        sceneObj.mesh->Render(phongShadingShader);
+
+        // Light data.
+        if (dirLight != nullptr)
+        {
+            glUniform3fv(phongShadingShader->GetLocDirLightDir(), 1, glm::value_ptr(dirLight->GetDirection()));
+            glUniform3fv(phongShadingShader->GetLocPointLightIntensity(), 1, glm::value_ptr(pointLight->GetIntensity()));
+            
+            // TODO:Px, Py;dirctional light position
+            glm::mat4x4 T1 = glm::translate(glm::mat4x4(1.0f), glm::vec3(-1.0f + Px, -1.0f + Py, 0.0f));
+            glm::mat4x4 S = glm::scale(glm::mat4x4(1.0f), glm::vec3(1.2f, 1.2f, 1.2f));
+
+            // calculate the rotation parameter, from (0,1,0) to dirLightDirection
+            // rotation axis
+            glm::vec3 rotationAxis = glm::cross(glm::vec3(0, 1, 0), dirLightDirection);
+            // rotation angle
+            float angle = acos(glm::dot(glm::normalize(glm::vec3(0, 1, 0)), glm::normalize(dirLightDirection)));
+            // rotation matrix
+            glm::mat4 R = glm::rotate(glm::mat4(1.0f), angle, rotationAxis);
+            sceneObj.worldMatrix = T1 * R * S;
+            glm::mat4x4 normalMatrix = glm::transpose(glm::inverse(sceneObj.worldMatrix));
+            glm::mat4x4 MVP = camera->GetProjMatrix() * camera->GetViewMatrix() * sceneObj.worldMatrix;
+            glUniformMatrix4fv(phongShadingShader->GetLocM(), 1, GL_FALSE, glm::value_ptr(sceneObj.worldMatrix));
+            glUniform3fv(phongShadingShader->GetLocCameraPos(), 1, glm::value_ptr(camera->GetCameraPos()));
+            glUniformMatrix4fv(phongShadingShader->GetLocNM(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+            glUniformMatrix4fv(phongShadingShader->GetLocMVP(), 1, GL_FALSE, glm::value_ptr(MVP));
+            sceneObj.mesh->Render(phongShadingShader);
+        }
+        // if (pointLight != nullptr)
+        // {
+        //     glUniform3fv(phongShadingShader->GetLocPointLightPos(), 1, glm::value_ptr(pointLight->GetPosition()));
+        //     glUniform3fv(phongShadingShader->GetLocPointLightIntensity(), 1, glm::value_ptr(pointLight->GetIntensity()));
+        // }
+        // if (spotLight != nullptr)
+        // {
+        //     // TODO:實作spotlight
+        // }
+        glUniform3fv(phongShadingShader->GetLocAmbientLight(), 1, glm::value_ptr(ambientLight));
+
+        // -------------------------------------------------------
     }
-    
+
     // Visualize the light with fill color. ------------------------------------------------------
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    PointLight* pointLight = pointLightObj.light;
-    if (pointLight != nullptr) {
+    PointLight *pointLight = pointLightObj.light;
+    if (pointLight != nullptr)
+    {
         glm::mat4x4 T = glm::translate(glm::mat4x4(1.0f), pointLight->GetPosition());
         pointLightObj.worldMatrix = T;
         glm::mat4x4 MVP = camera->GetProjMatrix() * camera->GetViewMatrix() * pointLightObj.worldMatrix;
@@ -159,8 +218,9 @@ void RenderSceneCB()
         pointLight->Draw();
         fillColorShader->UnBind();
     }
-    SpotLight* spotLight = (SpotLight*)(spotLightObj.light);
-    if (spotLight != nullptr) {
+    SpotLight *spotLight = (SpotLight *)(spotLightObj.light);
+    if (spotLight != nullptr)
+    {
         glm::mat4x4 T = glm::translate(glm::mat4x4(1.0f), spotLight->GetPosition());
         spotLightObj.worldMatrix = T;
         glm::mat4x4 MVP = camera->GetProjMatrix() * camera->GetViewMatrix() * spotLightObj.worldMatrix;
@@ -172,7 +232,7 @@ void RenderSceneCB()
         fillColorShader->UnBind();
     }
     // -------------------------------------------------------------------------------------------
-
+    phongShadingShader->UnBind();
     glutSwapBuffers();
 }
 
@@ -196,9 +256,10 @@ void ProcessSpecialKeysCB(int key, int x, int y)
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    
-    // Handle special (functional) keyboard inputs such as F1, spacebar, page up, etc. 
-    switch (key) {
+
+    // Handle special (functional) keyboard inputs such as F1, spacebar, page up, etc.
+    switch (key)
+    {
     case GLUT_KEY_F1:
         // Render with point mode.
         glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
@@ -211,7 +272,7 @@ void ProcessSpecialKeysCB(int key, int x, int y)
         // Render with fill mode.
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         break;
-    
+
     // Point light control.
     case GLUT_KEY_LEFT:
         if (pointLight != nullptr)
@@ -240,15 +301,17 @@ void ProcessKeysCB(unsigned char key, int x, int y)
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    
+
     // Handle other keyboard inputs those are not defined as special keys.
-    if (key == 27) {
+    if (key == 27)
+    {
         // Release memory allocation if needed.
         ReleaseResources();
         exit(0);
     }
     // Spot light control.
-    if (spotLight != nullptr) {
+    if (spotLight != nullptr)
+    {
         if (key == 'a')
             spotLight->MoveLeft(lightMoveSpeed);
         if (key == 'd')
@@ -265,30 +328,30 @@ void SetupRenderState()
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    
+
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
 
     glm::vec4 clearColor = glm::vec4(0.44f, 0.57f, 0.75f, 1.00f);
     glClearColor(
-        (GLclampf)(clearColor.r), 
-        (GLclampf)(clearColor.g), 
-        (GLclampf)(clearColor.b), 
-        (GLclampf)(clearColor.a)
-    );
+        (GLclampf)(clearColor.r),
+        (GLclampf)(clearColor.g),
+        (GLclampf)(clearColor.b),
+        (GLclampf)(clearColor.a));
 }
 
-void LoadObjects(const std::string& modelPath)
+void LoadObjects(const std::string &modelPath)
 {
     // -------------------------------------------------------
-	// Note: you can change the code below if you want to load
+    // TODO:Note: you can change the code below if you want to load
     //       the model dynamically.
-	// -------------------------------------------------------
+    // -------------------------------------------------------
 
     mesh = new TriangleMesh();
     mesh->LoadFromFile(modelPath, true);
+    mesh->CreateBuffers();
     mesh->ShowInfo();
-    sceneObj.mesh = mesh;    
+    sceneObj.mesh = mesh;
 }
 
 void CreateLights()
@@ -296,7 +359,7 @@ void CreateLights()
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    
+
     // Create a directional light.
     dirLight = new DirectionalLight(dirLightDirection, dirLightRadiance);
     // Create a point light.
@@ -304,8 +367,8 @@ void CreateLights()
     pointLightObj.light = pointLight;
     pointLightObj.visColor = glm::normalize((pointLightObj.light)->GetIntensity());
     // Create a spot light.
-    spotLight = new SpotLight(spotLightPosition, spotLightIntensity, spotLightDirection, 
-            spotLightCutoffStartInDegree, spotLightTotalWidthInDegree);
+    spotLight = new SpotLight(spotLightPosition, spotLightIntensity, spotLightDirection,
+                              spotLightCutoffStartInDegree, spotLightTotalWidthInDegree);
     spotLightObj.light = spotLight;
     spotLightObj.visColor = glm::normalize((spotLightObj.light)->GetIntensity());
 }
@@ -315,7 +378,7 @@ void CreateCamera()
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
-    
+
     // Create a camera and update view and proj matrices.
     camera = new Camera((float)screenWidth / (float)screenHeight);
     camera->UpdateView(cameraPos, cameraTarget, cameraUp);
@@ -338,7 +401,7 @@ void CreateShaderLib()
         exit(1);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     // Setting window properties.
     glutInit(&argc, argv);
@@ -350,15 +413,16 @@ int main(int argc, char** argv)
     // Initialize GLEW.
     // Must be done after glut is initialized!
     GLenum res = glewInit();
-    if (res != GLEW_OK) {
-        std::cerr << "GLEW initialization error: " 
+    if (res != GLEW_OK)
+    {
+        std::cerr << "GLEW initialization error: "
                   << glewGetErrorString(res) << std::endl;
         return 1;
     }
 
     // Initialization.
     SetupRenderState();
-    LoadObjects("TestModels_HW2/ColorCube/ColorCube.obj"); //TODO:Load Model
+    LoadObjects("TestModels_HW2/ColorCube/ColorCube.obj"); // TODO:Load Model
     CreateLights();
     CreateCamera();
     CreateShaderLib();
