@@ -115,7 +115,6 @@ bool ShaderProg::LoadShaderTextFromFile(const std::string filePath, std::string 
         std::cerr << "[ERROR] Failed to open shader source file: " << filePath << std::endl;
         return false;
     }
-    std::cout << "[Debug] Load file: " << filePath << std::endl;
     sourceText.assign((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
     return true;
 }
@@ -154,6 +153,11 @@ PhongShadingDemoShaderProg::PhongShadingDemoShaderProg()
     locPointLightIntensity = -1;
     // -------------------------------------------------------
     // TODO:Add your code for initializing the data of spot light.
+    locSpotLightDir = -1;
+    locSpotLightPos = -1;
+    locSpotLightIntensity = -1;
+    locSpotLightCutoffStartInDegree = -1;
+    locSpotLightTotalWidthInDegree = -1;
     // -------------------------------------------------------
 }
 
@@ -178,5 +182,10 @@ void PhongShadingDemoShaderProg::GetUniformVariableLocation()
     locPointLightIntensity = glGetUniformLocation(shaderProgId, "pointLightIntensity");
     // -------------------------------------------------------
     // TODO:Add your code for getting the location of data of spot light.
+    locSpotLightDir = glGetUniformLocation(shaderProgId, "spotlightLightDir");
+    locSpotLightPos = glGetUniformLocation(shaderProgId, "spotlightLightPos");
+    locSpotLightIntensity = glGetUniformLocation(shaderProgId, "spotlightLightIntensity");
+    locSpotLightCutoffStartInDegree = glGetUniformLocation(shaderProgId, "spotlightCutoffStartInDegree");
+    locSpotLightTotalWidthInDegree = glGetUniformLocation(shaderProgId, "spotlightTotalWidthInDegree");
     // -------------------------------------------------------
 }

@@ -15,7 +15,7 @@ public:
 	void SetName(const std::string mtlName) { name = mtlName; }
 	std::string GetName() const { return name; }
 
-protected:
+protected:	
 	// Material Protected Data.
 	std::string name;
 };
@@ -27,23 +27,13 @@ class PhongMaterial : public Material
 {
 public:
 	// PhongMaterial Public Methods.
-	PhongMaterial()
-	{
+	PhongMaterial() {
 		Ka = glm::vec3(0.0f, 0.0f, 0.0f);
 		Kd = glm::vec3(0.0f, 0.0f, 0.0f);
 		Ks = glm::vec3(0.0f, 0.0f, 0.0f);
 		Ns = 0.0f;
 	};
 	~PhongMaterial() {};
-
-	// 印出詳細資訊(for debug)
-	PrintInfo()
-	{
-		printf("Ns: %f, ", Ns);
-		printf("Ka: %f %f %f, ", Ka.x, Ka.y, Ka.z);
-		printf("Kd: %f %f %f, ", Kd.x, Kd.y, Kd.z);
-		printf("Ks: %f %f %f\n", Ks.x, Ks.y, Ks.z);
-	}
 
 	void SetKa(const glm::vec3 ka) { Ka = ka; }
 	void SetKd(const glm::vec3 kd) { Kd = kd; }
@@ -62,5 +52,7 @@ private:
 	glm::vec3 Ks;
 	float Ns;
 };
+
+
 
 #endif

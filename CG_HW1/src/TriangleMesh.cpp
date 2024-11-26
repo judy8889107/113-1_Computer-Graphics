@@ -108,7 +108,7 @@ bool TriangleMesh::LoadFromFile(const std::string &filePath, const bool normaliz
 		if (normalized)
 		{
 			glm::vec3 minVertex = glm::vec3(FLT_MAX);
-			glm::vec3 maxVertex = glm::vec3(FLT_MIN);
+			glm::vec3 maxVertex = glm::vec3(-FLT_MIN);
 
 			// 找最小和最大座標
 			for (const auto &vertex : vertices)

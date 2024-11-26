@@ -1,4 +1,4 @@
-#include "headers.h"
+﻿#include "headers.h"
 #include "trianglemesh.h"
 #include "camera.h"
 #include "shaderprog.h"
@@ -7,6 +7,9 @@
 // Global variables.
 int screenWidth = 600;
 int screenHeight = 600;
+int objFile_index = 0;
+std::vector<std::string> objFile_name = {"ColorCube.obj", "Forklift.obj", "Gengar.obj", "Koffing.obj", "Pillows.obj", "Rose.obj", "Soccer.obj", "Bunny.obj"};
+
 // Triangle mesh.
 TriangleMesh *mesh = nullptr;
 // Lights.
@@ -21,7 +24,7 @@ glm::vec3 pointLightIntensity = glm::vec3(0.5f, 0.1f, 0.1f);
 glm::vec3 spotLightPosition = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 spotLightDirection = glm::vec3(0.0f, -1.0f, 0.0f);
 glm::vec3 spotLightIntensity = glm::vec3(0.5f, 0.5f, 0.1f);
-float spotLightCutoffStartInDegree = 30.0f;
+float spotLightCutoffStartInDegree = 30.0f; // spotlight hint
 float spotLightTotalWidthInDegree = 45.0f;
 glm::vec3 ambientLight = glm::vec3(0.2f, 0.2f, 0.2f);
 // Camera.
@@ -51,7 +54,7 @@ struct SceneObject
 };
 SceneObject sceneObj;
 
-// ScenePointLight（用於點光源的可視化）。
+// ScenePointLight (for visualization of a point light).
 struct ScenePointLight
 {
     ScenePointLight()
@@ -149,56 +152,37 @@ void RenderSceneCB()
 
         // -------------------------------------------------------
         // TODO:Add your rendering code here.
-        // Ref shading.cpp
         phongShadingShader->Bind();
-
-        // Transformation Matrix
         glUniformMatrix4fv(phongShadingShader->GetLocM(), 1, GL_FALSE, glm::value_ptr(sceneObj.worldMatrix));
-        glUniformMatrix4fv(phongShadingShader->GetLocCameraPos(), 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+        glUniform3fv(phongShadingShader->GetLocCameraPos(), 1, glm::value_ptr(camera->GetCameraPos()));
         glUniformMatrix4fv(phongShadingShader->GetLocNM(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
         glUniformMatrix4fv(phongShadingShader->GetLocMVP(), 1, GL_FALSE, glm::value_ptr(MVP));
-
-        // 渲染網格
         sceneObj.mesh->Render(phongShadingShader);
+        // -------------------------------------------------------
 
-        // Light data.
+        // ambient light.
+        glUniform3fv(phongShadingShader->GetLocAmbientLight(), 1, glm::value_ptr(ambientLight));
+        // direction light.
         if (dirLight != nullptr)
         {
             glUniform3fv(phongShadingShader->GetLocDirLightDir(), 1, glm::value_ptr(dirLight->GetDirection()));
-            glUniform3fv(phongShadingShader->GetLocPointLightIntensity(), 1, glm::value_ptr(pointLight->GetIntensity()));
-            
-            // TODO:Px, Py;dirctional light position
-            glm::mat4x4 T1 = glm::translate(glm::mat4x4(1.0f), glm::vec3(-1.0f + Px, -1.0f + Py, 0.0f));
-            glm::mat4x4 S = glm::scale(glm::mat4x4(1.0f), glm::vec3(1.2f, 1.2f, 1.2f));
-
-            // calculate the rotation parameter, from (0,1,0) to dirLightDirection
-            // rotation axis
-            glm::vec3 rotationAxis = glm::cross(glm::vec3(0, 1, 0), dirLightDirection);
-            // rotation angle
-            float angle = acos(glm::dot(glm::normalize(glm::vec3(0, 1, 0)), glm::normalize(dirLightDirection)));
-            // rotation matrix
-            glm::mat4 R = glm::rotate(glm::mat4(1.0f), angle, rotationAxis);
-            sceneObj.worldMatrix = T1 * R * S;
-            glm::mat4x4 normalMatrix = glm::transpose(glm::inverse(sceneObj.worldMatrix));
-            glm::mat4x4 MVP = camera->GetProjMatrix() * camera->GetViewMatrix() * sceneObj.worldMatrix;
-            glUniformMatrix4fv(phongShadingShader->GetLocM(), 1, GL_FALSE, glm::value_ptr(sceneObj.worldMatrix));
-            glUniform3fv(phongShadingShader->GetLocCameraPos(), 1, glm::value_ptr(camera->GetCameraPos()));
-            glUniformMatrix4fv(phongShadingShader->GetLocNM(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-            glUniformMatrix4fv(phongShadingShader->GetLocMVP(), 1, GL_FALSE, glm::value_ptr(MVP));
-            sceneObj.mesh->Render(phongShadingShader);
+            glUniform3fv(phongShadingShader->GetLocDirLightRadiance(), 1, glm::value_ptr(dirLight->GetRadiance()));
         }
-        // if (pointLight != nullptr)
-        // {
-        //     glUniform3fv(phongShadingShader->GetLocPointLightPos(), 1, glm::value_ptr(pointLight->GetPosition()));
-        //     glUniform3fv(phongShadingShader->GetLocPointLightIntensity(), 1, glm::value_ptr(pointLight->GetIntensity()));
-        // }
-        // if (spotLight != nullptr)
-        // {
-        //     // TODO:實作spotlight
-        // }
-        glUniform3fv(phongShadingShader->GetLocAmbientLight(), 1, glm::value_ptr(ambientLight));
-
-        // -------------------------------------------------------
+        // point light.
+        if (pointLight != nullptr)
+        {
+            glUniform3fv(phongShadingShader->GetLocPointLightPos(), 1, glm::value_ptr(pointLight->GetPosition()));
+            glUniform3fv(phongShadingShader->GetLocPointLightIntensity(), 1, glm::value_ptr(pointLight->GetIntensity()));
+        }
+        // spot light.
+        if (spotLight != nullptr)
+        {
+            glUniform3fv(phongShadingShader->GetLocSpotLightDir(), 1, glm::value_ptr(spotLight->GetDirection()));
+            glUniform3fv(phongShadingShader->GetLocSpotLightPos(), 1, glm::value_ptr(spotLight->GetPosition()));
+            glUniform3fv(phongShadingShader->GetLocSpotLightIntensity(), 1, glm::value_ptr(spotLight->GetIntensity()));
+            glUniform1f(phongShadingShader->GetLocSpotLightCutoffStartInDegree(), spotLight->GetLightCutoffStartInDegree());
+            glUniform1f(phongShadingShader->GetLocSpotLightTotalWidthInDegree(), spotLight->GetLightTotalWidthInDegree());
+        }
     }
 
     // Visualize the light with fill color. ------------------------------------------------------
@@ -232,7 +216,7 @@ void RenderSceneCB()
         fillColorShader->UnBind();
     }
     // -------------------------------------------------------------------------------------------
-    phongShadingShader->UnBind();
+
     glutSwapBuffers();
 }
 
@@ -298,6 +282,21 @@ void ProcessSpecialKeysCB(int key, int x, int y)
 
 void ProcessKeysCB(unsigned char key, int x, int y)
 {
+    // change model
+    if (key == 'n')
+    {
+        objFile_index = (objFile_index + 1) % objFile_name.size();
+        std::string modelPath = "TestModels_HW2/" + objFile_name[objFile_index].substr(0, objFile_name[objFile_index].find(".")) + "/" + objFile_name[objFile_index];
+        printf("modelPath: %s\n", modelPath.c_str());
+        LoadObjects(modelPath);
+    }
+    if (key == 'p')
+    {
+        objFile_index = objFile_index == 0 ? objFile_name.size() - 1 : objFile_index - 1;
+        std::string modelPath = "TestModels_HW2/" + objFile_name[objFile_index].substr(0, objFile_name[objFile_index].find(".")) + "/" + objFile_name[objFile_index];
+        printf("modelPath: %s\n", modelPath.c_str());
+        LoadObjects(modelPath);
+    }
     // ----------------------------------------------------
     // You do not need to change the code.
     // ----------------------------------------------------
@@ -343,15 +342,26 @@ void SetupRenderState()
 void LoadObjects(const std::string &modelPath)
 {
     // -------------------------------------------------------
-    // TODO:Note: you can change the code below if you want to load
+    // Note: you can change the code below if you want to load
     //       the model dynamically.
     // -------------------------------------------------------
+    // 釋放之前的模型資源
+    if (mesh != nullptr)
+    {
+        delete mesh;
+    }
 
     mesh = new TriangleMesh();
-    mesh->LoadFromFile(modelPath, true);
-    mesh->CreateBuffers();
-    mesh->ShowInfo();
-    sceneObj.mesh = mesh;
+    if (mesh->LoadFromFile(modelPath, true))
+    {
+        mesh->ShowInfo();
+        sceneObj.mesh = mesh;
+        sceneObj.mesh->CreateBuffer();
+    }
+    else
+    {
+        std::cerr << "Failed to load model from: " << modelPath << std::endl;
+    }
 }
 
 void CreateLights()
@@ -422,7 +432,9 @@ int main(int argc, char **argv)
 
     // Initialization.
     SetupRenderState();
-    LoadObjects("TestModels_HW2/ColorCube/ColorCube.obj"); // TODO:Load Model
+    std::string modelPath = "TestModels_HW2/" + objFile_name[objFile_index].substr(0, objFile_name[objFile_index].find(".")) + "/" + objFile_name[objFile_index];
+    LoadObjects(modelPath); // TODO: add model path
+    sceneObj.mesh->CreateBuffer();
     CreateLights();
     CreateCamera();
     CreateShaderLib();
