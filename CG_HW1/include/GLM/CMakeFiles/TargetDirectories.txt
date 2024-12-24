@@ -1,3 +1,0 @@
-C:/Users/ESA/Desktop/NTPU/homework/113-1_Computer Graphics/SimpleDrawing/include/GLM/CMakeFiles/INSTALL.dir
-C:/Users/ESA/Desktop/NTPU/homework/113-1_Computer Graphics/SimpleDrawing/include/GLM/CMakeFiles/ALL_BUILD.dir
-C:/Users/ESA/Desktop/NTPU/homework/113-1_Computer Graphics/SimpleDrawing/include/GLM/CMakeFiles/ZERO_CHECK.dir
